@@ -1,44 +1,15 @@
-import 'package:blogapp/Blog/addBlog.dart';
-import 'package:blogapp/Pages/HomePage.dart';
-import 'package:blogapp/Profile/MainProfile.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'Pages/LoadingPage.dart';
 import 'Pages/WelcomePage.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'Pages/HomePage.dart';
 
 void main() {
   runApp(MyApp());
 }
 
-class MyApp extends StatefulWidget {
-  @override
-  _MyAppState createState() => _MyAppState();
-}
-
-class _MyAppState extends State<MyApp> {
-  Widget page = LoadingPage();
-  final storage = FlutterSecureStorage();
-  @override
-  void initState() {
-    // TODO: implement initState
-    super.initState();
-    checkLogin();
-  }
-
-  void checkLogin() async {
-    String token = await storage.read(key: "token");
-    if (token != null) {
-      setState(() {
-        page = HomePage();
-      });
-    } else {
-      setState(() {
-        page = WelcomePage();
-      });
-    }
-  }
-
+class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -47,7 +18,50 @@ class _MyAppState extends State<MyApp> {
           Theme.of(context).textTheme,
         ),
       ),
-      home: page,
+      home: AuthenticationWrapper(),
     );
   }
 }
+
+class AuthenticationWrapper extends StatefulWidget {
+  @override
+  _AuthenticationWrapperState createState() => _AuthenticationWrapperState();
+}
+
+class _AuthenticationWrapperState extends State<AuthenticationWrapper> {
+  Widget page = LoadingPage();
+  final storage = FlutterSecureStorage();
+
+  @override
+  void initState() {
+    super.initState();
+    checkLogin();
+  }
+
+  Future<void> checkLogin() async {
+    try {
+      String token = await storage.read(key: "token");
+      if (token != null) {
+        setState(() {
+          page = HomePage();
+        });
+      } else {
+        setState(() {
+          page = WelcomePage();
+        });
+      }
+    } catch (e) {
+      print("Error occurred: $e");
+      setState(() {
+        page = WelcomePage(); // Navigate to welcome page in case of error
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return page;
+  }
+}
+
+
